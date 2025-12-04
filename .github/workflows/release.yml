@@ -9,7 +9,7 @@ jobs:
   crates-publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -22,12 +22,12 @@ jobs:
   gh-release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Download artifacts
-        uses: dawidd6/action-download-artifact@v3
+        uses: dawidd6/action-download-artifact@v11
         with:
           workflow_conclusion: success
           workflow: build.yml
@@ -44,7 +44,7 @@ jobs:
         run: echo "TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
 
       - name: Create release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: ./out/**
           name: Ferium ${{ env.TAG }}
@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: gh-release
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -93,7 +93,7 @@ jobs:
   homebrew-update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -110,7 +110,7 @@ jobs:
   winget-update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
