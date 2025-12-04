@@ -27,7 +27,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download artifacts
-        uses: dawidd6/action-download-artifact@v3
+        uses: dawidd6/action-download-artifact@v11
         with:
           workflow_conclusion: success
           workflow: build.yml
