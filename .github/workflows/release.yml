@@ -10,10 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-
       - name: Upload to crates.io
         run: cargo publish
         env:
@@ -25,24 +23,19 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-
       - name: Download artifacts
         uses: dawidd6/action-download-artifact@v11
         with:
           workflow_conclusion: success
           workflow: build.yml
           path: ./out
-
       - name: Create sha256sum for Scoop
         run: sha256sum ./out/**/ferium-windows-msvc.zip | cut -d ' ' -f 1 > ./out/ferium-windows-msvc.zip.sha256
-
       # Remove the dots for the markdown header
       - name: MD Header
         run: echo "MD_HEADER=$(git describe --tags --abbrev=0 | sed 's/\.//g')" >> $GITHUB_ENV
-
       - name: Get the latest tag
         run: echo "TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
-
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
