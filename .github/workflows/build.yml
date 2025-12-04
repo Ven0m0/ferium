@@ -20,7 +20,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CARGO_TERM_COLOR: always
@@ -39,7 +39,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         uses: dtolnay/rust-toolchain@nightly
         with:
-          targets: x86_64-pc-windows-gnu, x86_64-unknown-linux-musl, aarch64-unknown-linux-musl, x86_64-unknown-linux-gnu
+          targets: x86_64-pc-windows-gnu, x86_64-unknown-linux-musl, aarch64-unknown-linux-musl
           components: clippy
 
       - name: Install Linux dependencies
