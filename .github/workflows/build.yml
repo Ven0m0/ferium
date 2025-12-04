@@ -35,19 +35,20 @@ jobs:
         uses: dtolnay/rust-toolchain@nightly
         with:
           components: clippy
+          toolchain: nightly
       - name: Install Rust for Linux
         if: matrix.os == 'ubuntu-latest'
         uses: dtolnay/rust-toolchain@nightly
         with:
           targets: x86_64-pc-windows-gnu, x86_64-unknown-linux-musl, aarch64-unknown-linux-musl
+          toolchain: nightly
           components: clippy
-
       - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-latest'
         run: |
-          sudo apt update
-          sudo apt install gcc-mingw-w64-x86-64 musl musl-tools gcc-aarch64-linux-gnu libwayland-dev
-          curl https://apt.llvm.org/llvm.sh | sudo bash -s 17
+          sudo apt-get update
+          sudo apt-get install gcc-mingw-w64-x86-64 musl musl-tools gcc-aarch64-linux-gnu libwayland-dev
+          curl -s https://apt.llvm.org/llvm.sh | sudo bash -s 17
 
       - name: Install Rust cache
         uses: Swatinem/rust-cache@v2
