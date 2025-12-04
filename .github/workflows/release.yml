@@ -57,11 +57,8 @@ jobs:
             - Linux ARM (aarch64 linux musl)
             - Linux without a GUI file dialogue
             - Linux (x64 linux musl)
-            - macOS Apple Silicon (aarch64 darwin)
-            - macOS Intel (x64 darwin)
             - GNU Windows (x64 windows gnu) (i.e. Cygwin/MinGW)
             - Windows (x64 windows msvc)
-
             You can install ferium by downloading and unzipping the appropriate asset, and moving the executable to ~/bin or any other folder in your path.
 
   aur-update:
@@ -71,10 +68,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-
       - name: Get the latest tag
         run: echo "TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
-
       - name: Update no-gui AUR package
         uses: aksh1618/update-aur-package@v1
         with:
@@ -90,30 +85,12 @@ jobs:
           commit_email: ileshkt@gmail.com
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
 
-  homebrew-update:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Get the latest tag
-        run: echo "TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
-
-      - name: Update Homebrew formula
-        uses: mislav/bump-homebrew-formula-action@v3
-        with:
-          tag-name: ${{ env.TAG }}
-        env:
-          COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
-
   winget-update:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-
       - uses: vedantmgoyal9/winget-releaser@v2
         with:
           identifier: GorillaDevs.Ferium
