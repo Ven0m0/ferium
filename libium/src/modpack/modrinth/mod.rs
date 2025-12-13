@@ -43,7 +43,8 @@ pub fn create(
 
     // Add the overrides to the zip file
     if let Some(overrides) = overrides {
-        writer.create_from_directory(&overrides.to_owned())?;
+        // FERRITE: Temporary fix
+        //writer.create_from_directory(&overrides.to_owned())?;
     }
 
     Ok(())

@@ -1,3 +1,4 @@
+# This repo exists for ferrite's libium fork, ferium won't work with it
 # Ferium
 
 [![rust badge](https://img.shields.io/static/v1?label=Made%20with&message=Rust&logo=rust&labelColor=e82833&color=b11522)](https://www.rust-lang.org)

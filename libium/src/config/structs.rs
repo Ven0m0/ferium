@@ -53,6 +53,8 @@ pub struct Profile {
 
     pub mods: Vec<Mod>,
 
+    pub disabled: Vec<Mod>,
+
     // Kept for backwards compatibility reasons (i.e. migrating from a v4 config)
     #[serde(skip_serializing)]
     game_version: Option<String>,
@@ -66,19 +68,39 @@ impl Profile {
         name: String,
         output_dir: PathBuf,
         game_versions: Vec<String>,
-        mod_loader: ModLoader,
+        mod_loaders: Vec<ModLoader>,
     ) -> Self {
         Self {
             name,
             output_dir,
             filters: vec![
-                Filter::ModLoaderPrefer(match mod_loader {
-                    ModLoader::Quilt => vec![ModLoader::Quilt, ModLoader::Fabric],
-                    _ => vec![mod_loader],
-                }),
+                Filter::ModLoaderPrefer(mod_loaders),
                 Filter::GameVersionStrict(game_versions),
             ],
             mods: vec![],
+            disabled: vec![],
+            game_version: None,
+            mod_loader: None,
+        }
+    }
+
+    pub fn new_complete(
+        name: String,
+        output_dir: PathBuf,
+        game_versions: Vec<String>,
+        mod_loaders: Vec<ModLoader>,
+        mods: Vec<Mod>,
+        disabled: Vec<Mod>,
+    ) -> Self {
+        Self {
+            name,
+            output_dir,
+            mods,
+            disabled,
+            filters: vec![
+                Filter::ModLoaderPrefer(mod_loaders),
+                Filter::GameVersionStrict(game_versions),
+            ],
             game_version: None,
             mod_loader: None,
         }
@@ -170,11 +192,13 @@ impl Mod {
     }
 }
 
+// Wtf. This isn't even used
 const fn is_false(b: &bool) -> bool {
     !*b
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
+#[serde(untagged)]
 pub enum ModIdentifier {
     CurseForgeProject(i32),
     ModrinthProject(String),
@@ -192,6 +216,7 @@ pub enum ModLoader {
     Forge,
     #[clap(name = "neoforge")]
     NeoForge,
+    Velocity,
 }
 
 #[derive(thiserror::Error, Debug, PartialEq, Eq)]
@@ -208,6 +233,7 @@ impl FromStr for ModLoader {
             "fabric" => Ok(Self::Fabric),
             "forge" => Ok(Self::Forge),
             "neoforge" => Ok(Self::NeoForge),
+            "velocity" => Ok(Self::Velocity),
             _ => Err(Self::Err {}),
         }
     }
