@@ -15,6 +15,7 @@
 #![deny(clippy::expect_used, reason = "Use anyhow::Context instead")]
 #![warn(clippy::dbg_macro)]
 #![expect(clippy::multiple_crate_versions, clippy::too_many_lines)]
+#![allow(clippy::implicit_clone)]
 
 mod add;
 mod cli;
