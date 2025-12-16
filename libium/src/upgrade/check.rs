@@ -105,15 +105,19 @@ impl CompiledFilter {
                 .collect_hashset(),
 
             CompiledFilter::GameVersionMinor(versions) => {
-                let mut final_versions = vec![];
-                for group in get_version_groups().await? {
-                    if group.iter().any(|v| versions.contains(v)) {
-                        final_versions.extend(group.clone());
-                    }
-                }
+                // Use references instead of cloning entire groups
+                let version_groups = get_version_groups().await?;
+                let matching_groups: Vec<&Vec<String>> = version_groups
+                    .iter()
+                    .filter(|group| group.iter().any(|v| versions.contains(v)))
+                    .collect();
 
                 download_files
-                    .positions(|f| final_versions.iter().any(|vc| f.game_versions.contains(vc)))
+                    .positions(|f| {
+                        matching_groups.iter().any(|group| {
+                            group.iter().any(|vc| f.game_versions.contains(vc))
+                        })
+                    })
                     .collect_hashset()
             }
 

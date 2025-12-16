@@ -1,5 +1,6 @@
 use crate::{CURSEFORGE_API, MODRINTH_API};
 use futures_util::{try_join, TryFutureExt};
+use rayon::prelude::*;
 use sha1::{Digest, Sha1};
 use std::{
     collections::HashMap,
@@ -23,29 +24,44 @@ pub async fn scan(
     dir_path: impl AsRef<Path>,
     hashing_complete: impl Fn(),
 ) -> Result<Vec<(String, Option<String>, Option<i32>)>> {
+    // Collect all JAR file paths first
+    let paths: Vec<_> = read_dir(dir_path)?
+        .filter_map(|entry| {
+            let path = entry.ok()?.path();
+            if path.is_file()
+                && path
+                    .extension()
+                    .is_some_and(|ext| ext.eq_ignore_ascii_case("jar"))
+            {
+                Some(path)
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    // Parallelize file reading and hashing using rayon
+    let hash_results: Vec<_> = paths
+        .par_iter()
+        .filter_map(|path| {
+            let bytes = read(path).ok()?;
+            let mr_hash = format!("{:x}", Sha1::digest(&bytes));
+            let cf_hash = furse::cf_fingerprint(&bytes);
+            let filename = path.file_name()?.to_owned();
+            Some((filename, mr_hash, cf_hash))
+        })
+        .collect();
+
+    // Deduplicate by cf_hash
     let mut filenames = HashMap::new();
     let mut mr_hashes = vec![];
     let mut cf_hashes = vec![];
 
-    for entry in read_dir(dir_path)? {
-        let path = entry?.path();
-        if path.is_file()
-            && path
-                .extension()
-                .is_some_and(|ext| ext.eq_ignore_ascii_case("jar"))
-        {
-            let bytes = read(&path)?;
-
-            let mr_hash = format!("{:x}", Sha1::digest(&bytes));
-            let cf_hash = furse::cf_fingerprint(&bytes);
-
-            if let Some(filename) = path.file_name() {
-                // Only add the hashes if this file wasn't already hashed
-                if filenames.insert(cf_hash, filename.to_owned()).is_none() {
-                    mr_hashes.push(mr_hash);
-                    cf_hashes.push(cf_hash);
-                }
-            }
+    for (filename, mr_hash, cf_hash) in hash_results {
+        // Only add the hashes if this file wasn't already hashed
+        if filenames.insert(cf_hash, filename).is_none() {
+            mr_hashes.push(mr_hash);
+            cf_hashes.push(cf_hash);
         }
     }
 
