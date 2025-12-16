@@ -84,7 +84,7 @@ jobs:
           CC_aarch64_unknown_linux_musl: clang-17
 
       - name: Upload build artefacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: binaries-${{ matrix.os }}
           path: out/ferium*.zip
