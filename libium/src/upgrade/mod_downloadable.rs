@@ -31,7 +31,7 @@ type Result<T> = std::result::Result<T, Error>;
 impl Mod {
     pub async fn fetch_download_file(
         &self,
-        mut profile_filters: Vec<Filter>,
+        profile_filters: &[Filter],
     ) -> Result<DownloadData> {
         match &self.identifier {
             ModIdentifier::PinnedCurseForgeProject(mod_id, pin) => {
@@ -73,14 +73,17 @@ impl Mod {
                     _ => unreachable!(),
                 };
 
+                let filters = if self.override_filters {
+                    self.filters.clone()
+                } else {
+                    let mut combined = profile_filters.to_vec();
+                    combined.extend(self.filters.clone());
+                    combined
+                };
+
                 let index = super::check::select_latest(
                     download_files.iter().map(|(m, _)| m),
-                    if self.override_filters {
-                        self.filters.clone()
-                    } else {
-                        profile_filters.extend(self.filters.clone());
-                        profile_filters
-                    },
+                    filters,
                 )
                 .await?;
                 Ok(download_files.into_iter().nth(index).unwrap().1)
