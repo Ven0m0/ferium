@@ -40,7 +40,7 @@ use libium::{
     iter_ext::IterExt as _,
 };
 use std::{
-    env::{set_var, var_os},
+    env::{set_var, var, var_os},
     process::ExitCode,
     sync::{LazyLock, OnceLock},
 };
@@ -51,9 +51,18 @@ static TICK: LazyLock<ColoredString> = LazyLock::new(|| "✓".green());
 
 pub const DEFAULT_PARALLEL_TASKS: usize = 50;
 pub static SEMAPHORE: OnceLock<Semaphore> = OnceLock::new();
+
+/// Get semaphore with configurable limit from FERIUM_PARALLEL_TASKS env var
+///
+/// Defaults to 50 if not set or invalid
 #[must_use]
-pub const fn default_semaphore() -> Semaphore {
-    Semaphore::const_new(DEFAULT_PARALLEL_TASKS)
+pub fn default_semaphore() -> Semaphore {
+    let limit = var("FERIUM_PARALLEL_TASKS")
+        .ok()
+        .and_then(|v| v.parse::<usize>().ok())
+        .unwrap_or(DEFAULT_PARALLEL_TASKS);
+
+    Semaphore::new(limit)
 }
 
 /// Indicatif themes

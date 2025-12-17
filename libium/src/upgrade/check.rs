@@ -6,7 +6,7 @@ use crate::{
 };
 use ferinth::structures::tag::GameVersionType;
 use regex::Regex;
-use std::{collections::HashSet, sync::OnceLock};
+use std::{collections::HashSet, sync::Arc, sync::OnceLock};
 
 #[derive(thiserror::Error, Debug)]
 #[error(transparent)]
@@ -21,6 +21,35 @@ pub enum Error {
 pub type Result<T> = std::result::Result<T, Error>;
 
 static VERSION_GROUPS: OnceLock<Vec<Vec<String>>> = OnceLock::new();
+
+/// Compiled version of Filter with pre-compiled regexes for performance
+#[derive(Clone)]
+pub enum CompiledFilter {
+    ModLoaderPrefer(Vec<crate::config::structs::ModLoader>),
+    ModLoaderAny(Vec<crate::config::structs::ModLoader>),
+    GameVersionStrict(Vec<String>),
+    GameVersionMinor(Vec<String>),
+    ReleaseChannel(ReleaseChannel),
+    Filename(Arc<Regex>),
+    Title(Arc<Regex>),
+    Description(Arc<Regex>),
+}
+
+impl Filter {
+    /// Compiles regex patterns for better performance
+    pub fn compile(self) -> Result<CompiledFilter> {
+        Ok(match self {
+            Filter::ModLoaderPrefer(v) => CompiledFilter::ModLoaderPrefer(v),
+            Filter::ModLoaderAny(v) => CompiledFilter::ModLoaderAny(v),
+            Filter::GameVersionStrict(v) => CompiledFilter::GameVersionStrict(v),
+            Filter::GameVersionMinor(v) => CompiledFilter::GameVersionMinor(v),
+            Filter::ReleaseChannel(v) => CompiledFilter::ReleaseChannel(v),
+            Filter::Filename(pattern) => CompiledFilter::Filename(Arc::new(Regex::new(&pattern)?)),
+            Filter::Title(pattern) => CompiledFilter::Title(Arc::new(Regex::new(&pattern)?)),
+            Filter::Description(pattern) => CompiledFilter::Description(Arc::new(Regex::new(&pattern)?)),
+        })
+    }
+}
 
 /// Gets groups of versions that are considered minor updates in terms of mod compatibility
 ///
@@ -47,16 +76,16 @@ pub async fn get_version_groups() -> Result<&'static Vec<Vec<String>>> {
     }
 }
 
-impl Filter {
+impl CompiledFilter {
     /// Returns the indices of `download_files` that have successfully filtered through `self`
     ///
-    /// This function fails if getting version groups fails, or the regex files to parse.
+    /// This function fails if getting version groups fails.
     pub async fn filter(
         &self,
         download_files: impl Iterator<Item = (usize, &Metadata)> + Clone,
     ) -> Result<HashSet<usize>> {
         Ok(match self {
-            Filter::ModLoaderPrefer(loaders) => loaders
+            CompiledFilter::ModLoaderPrefer(loaders) => loaders
                 .iter()
                 .map(move |l| {
                     download_files
@@ -67,28 +96,32 @@ impl Filter {
                 .find(|v| !v.is_empty())
                 .unwrap_or_default(),
 
-            Filter::ModLoaderAny(loaders) => download_files
+            CompiledFilter::ModLoaderAny(loaders) => download_files
                 .positions(|f| loaders.iter().any(|l| f.loaders.contains(l)))
                 .collect_hashset(),
 
-            Filter::GameVersionStrict(versions) => download_files
+            CompiledFilter::GameVersionStrict(versions) => download_files
                 .positions(|f| versions.iter().any(|vc| f.game_versions.contains(vc)))
                 .collect_hashset(),
 
-            Filter::GameVersionMinor(versions) => {
-                let mut final_versions = vec![];
-                for group in get_version_groups().await? {
-                    if group.iter().any(|v| versions.contains(v)) {
-                        final_versions.extend(group.clone());
-                    }
-                }
+            CompiledFilter::GameVersionMinor(versions) => {
+                // Use references instead of cloning entire groups
+                let version_groups = get_version_groups().await?;
+                let matching_groups: Vec<&Vec<String>> = version_groups
+                    .iter()
+                    .filter(|group| group.iter().any(|v| versions.contains(v)))
+                    .collect();
 
                 download_files
-                    .positions(|f| final_versions.iter().any(|vc| f.game_versions.contains(vc)))
+                    .positions(|f| {
+                        matching_groups.iter().any(|group| {
+                            group.iter().any(|vc| f.game_versions.contains(vc))
+                        })
+                    })
                     .collect_hashset()
             }
 
-            Filter::ReleaseChannel(channel) => download_files
+            CompiledFilter::ReleaseChannel(channel) => download_files
                 .positions(|f| match channel {
                     ReleaseChannel::Alpha => true,
                     ReleaseChannel::Beta => {
@@ -98,27 +131,37 @@ impl Filter {
                 })
                 .collect_hashset(),
 
-            Filter::Filename(regex) => {
-                let regex = Regex::new(regex)?;
-                download_files
-                    .positions(|f| regex.is_match(&f.filename))
-                    .collect_hashset()
-            }
+            CompiledFilter::Filename(regex) => download_files
+                .positions(|f| regex.is_match(&f.filename))
+                .collect_hashset(),
 
-            Filter::Title(regex) => {
-                let regex = Regex::new(regex)?;
-                download_files
-                    .positions(|f| regex.is_match(&f.title))
-                    .collect_hashset()
-            }
+            CompiledFilter::Title(regex) => download_files
+                .positions(|f| regex.is_match(&f.title))
+                .collect_hashset(),
 
-            Filter::Description(regex) => {
-                let regex = Regex::new(regex)?;
-                download_files
-                    .positions(|f| regex.is_match(&f.description))
-                    .collect_hashset()
-            }
+            CompiledFilter::Description(regex) => download_files
+                .positions(|f| regex.is_match(&f.description))
+                .collect_hashset(),
         })
+    }
+
+    /// Helper to identify if this is a ModLoaderPrefer filter
+    pub fn is_mod_loader_prefer(&self) -> bool {
+        matches!(self, CompiledFilter::ModLoaderPrefer(_))
+    }
+
+    /// Get a display string for error messages (for compatibility)
+    pub fn to_string(&self) -> String {
+        match self {
+            CompiledFilter::ModLoaderPrefer(v) => format!("Mod Loader ({:?})", v),
+            CompiledFilter::ModLoaderAny(v) => format!("Mod Loader Either ({:?})", v),
+            CompiledFilter::GameVersionStrict(v) => format!("Game Version ({:?})", v),
+            CompiledFilter::GameVersionMinor(v) => format!("Game Version Minor ({:?})", v),
+            CompiledFilter::ReleaseChannel(v) => format!("Release Channel ({:?})", v),
+            CompiledFilter::Filename(_) => "Filename (regex)".to_string(),
+            CompiledFilter::Title(_) => "Title (regex)".to_string(),
+            CompiledFilter::Description(_) => "Description (regex)".to_string(),
+        }
     }
 }
 
@@ -127,11 +170,17 @@ pub async fn select_latest(
     download_files: impl Iterator<Item = &Metadata> + Clone,
     filters: Vec<Filter>,
 ) -> Result<usize> {
+    // Compile all filters upfront to avoid regex recompilation
+    let compiled_filters: Vec<CompiledFilter> = filters
+        .into_iter()
+        .map(|f| f.compile())
+        .collect::<Result<Vec<_>>>()?;
+
     let mut filter_results = vec![];
     let mut run_last = vec![];
 
-    for filter in &filters {
-        if let Filter::ModLoaderPrefer(_) = filter {
+    for filter in &compiled_filters {
+        if filter.is_mod_loader_prefer() {
             // ModLoaderPrefer has to be run last
             run_last.push((
                 filter,
@@ -163,15 +212,15 @@ pub async fn select_latest(
     // Get the indices of the filtrations
     let mut filter_results = filter_results.into_iter().map(|(_, set)| set);
 
-    // Intersect all the index_sets by folding the HashSet::intersection method
-    // Ref: https://www.reddit.com/r/rust/comments/5v35l6/intersection_of_more_than_two_sets
-    // Here we're getting the non-ModLoaderPrefer indices first
+    // Intersect all the index_sets using in-place retain for better performance
+    // This avoids creating new HashSets on each iteration
     let final_indices = filter_results
         .next()
-        .map(|set_1| {
-            filter_results.fold(set_1, |set_a, set_b| {
-                set_a.intersection(&set_b).copied().collect_hashset()
-            })
+        .map(|mut set_1| {
+            for set_b in filter_results {
+                set_1.retain(|idx| set_b.contains(idx));
+            }
+            set_1
         })
         .unwrap_or_default();
 
@@ -191,13 +240,12 @@ pub async fn select_latest(
 
     let final_index = filter_results
         .next()
-        .and_then(|set_1| {
-            filter_results
-                .fold(set_1, |set_a, set_b| {
-                    set_a.intersection(&set_b).copied().collect_hashset()
-                })
-                .into_iter()
-                .min()
+        .and_then(|mut set_1| {
+            // Use in-place retain for better performance
+            for set_b in filter_results {
+                set_1.retain(|idx| set_b.contains(idx));
+            }
+            set_1.into_iter().min()
         })
         .ok_or(Error::IntersectFailure)?;
 

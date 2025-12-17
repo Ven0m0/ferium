@@ -8,7 +8,7 @@ use colored::Colorize as _;
 use indicatif::ProgressBar;
 use libium::{
     config::{
-        filters::ProfileParameters as _,
+        filters::{Filter, ProfileParameters as _},
         structs::{Mod, ModIdentifier, ModLoader, Profile},
     },
     upgrade::{mod_downloadable, DownloadData},
@@ -48,8 +48,12 @@ pub async fn get_platform_downloadables(profile: &Profile) -> Result<(Vec<Downlo
         .unwrap_or(20)
         .clamp(20, 50);
 
-    for mod_ in profile.mods.clone() {
-        mod_sender.send(mod_)?;
+    // Use Arc to make filter cloning cheap
+    let profile_filters = Arc::new(profile.filters.clone());
+
+    // Clone individual mods instead of cloning the entire vec
+    for mod_ in &profile.mods {
+        mod_sender.send(mod_.clone())?;
     }
 
     let mut initial = true;
@@ -70,14 +74,14 @@ pub async fn get_platform_downloadables(profile: &Profile) -> Result<(Vec<Downlo
             done_mods.push(mod_.identifier.clone());
             progress_bar.lock().inc_length(1);
 
-            let filters = profile.filters.clone();
+            let filters = Arc::clone(&profile_filters);
             let dep_sender = Arc::clone(&mod_sender);
             let progress_bar = Arc::clone(&progress_bar);
 
             tasks.spawn(async move {
                 let permit = SEMAPHORE.get_or_init(default_semaphore).acquire().await?;
 
-                let result = mod_.fetch_download_file(filters).await;
+                let result = mod_.fetch_download_file(&filters).await;
 
                 drop(permit);
 

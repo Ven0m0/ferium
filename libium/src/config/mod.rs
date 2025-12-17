@@ -1,8 +1,8 @@
 pub mod filters;
 pub mod structs;
 use std::{
-    fs::{create_dir_all, File},
-    io::{BufReader, Result},
+    fs::{create_dir_all, read_to_string, File},
+    io::{BufReader, Result, Write},
     path::Path,
 };
 
@@ -25,8 +25,29 @@ pub fn read_config(path: impl AsRef<Path>) -> Result<structs::Config> {
 }
 
 /// Serialise `config` and write it to the config file at `path`
+///
+/// This function implements dirty tracking - it only writes if the config has actually changed
 pub fn write_config(path: impl AsRef<Path>, config: &structs::Config) -> Result<()> {
-    let config_file = File::create(path)?;
-    serde_json::to_writer_pretty(config_file, config)?;
+    // Serialize the config to a string
+    let new_content = serde_json::to_string_pretty(config)?;
+
+    // Check if file exists and read current content
+    let path = path.as_ref();
+    let should_write = if path.exists() {
+        // Compare with existing content
+        match read_to_string(path) {
+            Ok(existing_content) => existing_content != new_content,
+            Err(_) => true, // If we can't read, write anyway
+        }
+    } else {
+        true // File doesn't exist, definitely write
+    };
+
+    // Only write if content has changed
+    if should_write {
+        let mut config_file = File::create(path)?;
+        config_file.write_all(new_content.as_bytes())?;
+    }
+
     Ok(())
 }
