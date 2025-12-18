@@ -8,7 +8,7 @@ use colored::Colorize as _;
 use indicatif::ProgressBar;
 use libium::{
     config::{
-        filters::{Filter, ProfileParameters as _},
+        filters::ProfileParameters as _,
         structs::{Mod, ModIdentifier, ModLoader, Profile},
     },
     upgrade::{mod_downloadable, DownloadData},
