@@ -41,7 +41,6 @@ exclude = [".github", "tests", "media"]
 
 [features]
 default = ["gui"]
-
 # Replaces the CLI text input with a GUI file dialogue for picking folders
 gui = ["rfd"]
 
