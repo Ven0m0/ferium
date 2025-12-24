@@ -27,7 +27,7 @@ reqwest.workspace = true
 furse.workspace = true
 clap.workspace = true
 
-derive_more = { version = "2.0", features = ["display"] }
+derive_more = { version = "2.1", features = ["display"] }
 serde = { version = "1.0", features = ["derive"] }
 url = { version = "2.5", features = ["serde"] }
 zip-extensions = "0.9.1"
