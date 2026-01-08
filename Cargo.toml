@@ -1,15 +1,3 @@
-[workspace]
-resolver = "2"
-
-[workspace.dependencies]
-reqwest = { version = "0.12.28", default-features = false, features = [
-    "rustls-tls",
-] }
-clap = { version = "4.5.54", features = ["derive", "env"] }
-serde_json = "1.0"
-octocrab = "0.49"
-ferinth = "2.12"
-furse = "1.6"
 
 [package]
 name = "ferium"
@@ -18,17 +6,25 @@ repository = "https://github.com/Ven0m0/ferium"
 description = "Fast CLI program for managing Minecraft mods and modpacks from Modrinth, CurseForge, and Github Releases"
 authors = [
     ## Code
-    "Ilesh Thiada (theRookieCoder) <ileshkt@gmail.com>", # AUR, Scoop, Homebrew, winget
+    "Ilesh Thiada (theRookieCoder) <ileshkt@gmail.com>",
+    # AUR, Scoop, Homebrew, winget
     "atamakahere (atamakahere-git)",
     "Tuxinal",
     ## Package Management
-    "KyleUltimateS",       # AUR
-    "ImperatorStorm",      # AUR
-    "leo60228",            # Nixpkgs
-    "Sofi (soupglasses)",  # Nixpkgs
-    "Elsie19",             # Pacstall
-    "Julianne (KokaKiwi)", # AUR
-    "Loatchi",             # Portage
+    "KyleUltimateS",
+    # AUR
+    "ImperatorStorm",
+    # AUR
+    "leo60228",
+    # Nixpkgs
+    "Sofi (soupglasses)",
+    # Nixpkgs
+    "Elsie19",
+    # Pacstall
+    "Julianne (KokaKiwi)",
+    # AUR
+    "Loatchi",
+    # Portage
     "ST-DDT",              # winget
 ]
 license = "MPL-2.0"
@@ -38,37 +34,55 @@ keywords = ["minecraft", "mod-manager", "modrinth", "curseforge", "github"]
 edition = "2021"
 rust-version = "1.80"                   # Bound by `std::sync::LazyLock`
 exclude = [".github", "tests", "media"]
+[workspace]
+resolver = "2"
+
+[workspace.dependencies]
+clap = { version = "4.5.54", features = ["derive", "env"] }
+ferinth = "2.12"
+furse = "1.6"
+octocrab = "0.49"
+reqwest = { version = "0.12.28", default-features = false, features = [
+    "rustls-tls",
+    "http2",
+    "hickory-dns",
+    "gzip",
+] }
+serde_json = "1.0"
 
 [features]
 default = []
 # Replaces the CLI text input with a GUI file dialogue for picking folders
 gui = ["rfd"]
+# Use mimalloc as the global allocator
+mimalloc = ["dep:mimalloc"]
 
 [dependencies]
-serde_json.workspace = true
-octocrab.workspace = true
-ferinth.workspace = true
-reqwest.workspace = true
-furse.workspace = true
+anyhow = "1.0"
 clap.workspace = true
+clap_complete = "4.5"
+colored = "3.0"
+ferinth.workspace = true
+fs_extra = "1.3"
+furse.workspace = true
+indicatif = "0.18"
+inquire = "0.9"
+libium = { path = "./libium" }
+mimalloc = { version = "0.1", optional = true }
+octocrab.workspace = true
+parking_lot = "0.12"
+reqwest.workspace = true
 
 rfd = { version = "0.16", optional = true, default-features = false, features = [
     "xdg-portal",
     "tokio",
 ] }
+serde_json.workspace = true
+size = "0.5"
 tokio = { version = "1.49", default-features = false, features = [
     "rt-multi-thread",
     "macros",
 ] }
-clap_complete = "4.5"
-parking_lot = "0.12"
-indicatif = "0.18"
-fs_extra = "1.3"
-colored = "3.0"
-inquire = "0.9"
-libium = { path = "./libium" }
-anyhow = "1.0"
-size = "0.5"
 
 [dev-dependencies]
 rand = "0.9"
@@ -76,9 +90,13 @@ rand = "0.9"
 [profile.release]
 codegen-units = 1
 strip = true
-lto = "fat"
+lto = true
 opt-level = 3
 debug = false
 debug-assertions = false
 overflow-checks = false
 panic = "abort"
+split-debuginfo = "off"
+
+[profile.dev]
+debug = 0

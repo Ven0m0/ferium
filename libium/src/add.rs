@@ -10,7 +10,7 @@ use crate::{
 use serde::Deserialize;
 use std::{collections::HashMap, str::FromStr};
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(
         "The developer of this project has denied third party applications from downloading it"
@@ -37,14 +37,14 @@ pub enum Error {
 }
 type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Deserialize)]
 struct GraphQlResponse {
     data: HashMap<String, Option<ResponseData>>,
     #[serde(default)]
     errors: Vec<GraphQLError>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Deserialize)]
 struct GraphQLError {
     #[serde(rename = "type")]
     type_: String,
@@ -52,21 +52,21 @@ struct GraphQLError {
     message: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Deserialize)]
 struct ResponseData {
     owner: OwnerData,
     name: String,
     releases: ReleaseConnection,
 }
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Deserialize)]
 struct OwnerData {
     login: String,
 }
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Deserialize)]
 struct ReleaseConnection {
     nodes: Vec<Release>,
 }
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Release {
     name: String,
@@ -74,11 +74,11 @@ struct Release {
     is_prerelease: bool,
     release_assets: ReleaseAssetConnection,
 }
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Deserialize)]
 struct ReleaseAssetConnection {
     nodes: Vec<ReleaseAsset>,
 }
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Deserialize)]
 struct ReleaseAsset {
     name: String,
 }

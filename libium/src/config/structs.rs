@@ -3,7 +3,7 @@ use derive_more::derive::Display;
 use serde::{Deserialize, Serialize};
 use std::{path::PathBuf, str::FromStr};
 
-#[derive(Deserialize, Serialize, Debug, Default, Clone)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Config {
     #[serde(skip_serializing_if = "is_zero")]
     #[serde(default)]
@@ -26,7 +26,7 @@ const fn is_zero(n: &usize) -> bool {
     *n == 0
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Modpack {
     pub name: String,
     pub output_dir: PathBuf,
@@ -34,13 +34,13 @@ pub struct Modpack {
     pub identifier: ModpackIdentifier,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum ModpackIdentifier {
     CurseForgeModpack(i32),
     ModrinthModpack(String),
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Profile {
     pub name: String,
 
@@ -146,7 +146,7 @@ impl Profile {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Mod {
     pub name: String,
     pub identifier: ModIdentifier,
@@ -197,7 +197,7 @@ const fn is_false(b: &bool) -> bool {
     !*b
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(untagged)]
 pub enum ModIdentifier {
     CurseForgeProject(i32),
@@ -209,7 +209,7 @@ pub enum ModIdentifier {
     PinnedGitHubRepository((String, String), i32),
 }
 
-#[derive(Deserialize, Serialize, Debug, Display, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+#[derive(Clone, Copy, Debug, Deserialize, Display, Eq, PartialEq, Serialize, clap::ValueEnum)]
 pub enum ModLoader {
     Quilt,
     Fabric,
@@ -219,7 +219,7 @@ pub enum ModLoader {
     Velocity,
 }
 
-#[derive(thiserror::Error, Debug, PartialEq, Eq)]
+#[derive(Debug, Eq, thiserror::Error, PartialEq)]
 #[error("The given string is not a recognised mod loader")]
 pub struct ModLoaderParseError;
 

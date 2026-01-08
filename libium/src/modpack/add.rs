@@ -7,7 +7,7 @@ use furse::structures::mod_structs::Mod;
 use reqwest::StatusCode;
 
 type Result<T> = std::result::Result<T, Error>;
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("Modpack is already added to profile")]
     AlreadyAdded,

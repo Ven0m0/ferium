@@ -17,6 +17,13 @@
 #![expect(clippy::multiple_crate_versions, clippy::too_many_lines)]
 #![allow(clippy::implicit_clone)]
 
+#[cfg(feature = "mimalloc")]
+use mimalloc::MiMalloc;
+
+#[cfg(feature = "mimalloc")]
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
+
 mod add;
 mod cli;
 mod download;
@@ -52,7 +59,7 @@ static TICK: LazyLock<ColoredString> = LazyLock::new(|| "✓".green());
 pub const DEFAULT_PARALLEL_TASKS: usize = 50;
 pub static SEMAPHORE: OnceLock<Semaphore> = OnceLock::new();
 
-/// Get semaphore with configurable limit from FERIUM_PARALLEL_TASKS env var
+/// Get semaphore with configurable limit from `FERIUM_PARALLEL_TASKS` env var
 ///
 /// Defaults to 50 if not set or invalid
 #[must_use]

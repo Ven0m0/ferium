@@ -210,12 +210,7 @@ pub fn modrinth(project: &Project, team_members: &[TeamMember]) {
             .display(", ")
             .clone()
             .cyan(),
-        project
-            .categories
-            .iter()
-            .display(", ")
-            .clone()
-            .magenta(),
+        project.categories.iter().display(", ").clone().magenta(),
         {
             if project.license.name.is_empty() {
                 "Custom"

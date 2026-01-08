@@ -34,7 +34,7 @@ pub enum Error {
 }
 type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug)]
 pub struct Metadata {
     /// The title of the GitHub Release, Modrinth Version, or CurseForge File
     pub title: String,
@@ -48,7 +48,7 @@ pub struct Metadata {
     pub loaders: Vec<ModLoader>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug)]
 pub struct DownloadData {
     pub download_url: Url,
     /// The path of the downloaded file relative to the output directory

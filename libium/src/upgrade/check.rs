@@ -8,7 +8,7 @@ use ferinth::structures::tag::GameVersionType;
 use regex::Regex;
 use std::{collections::HashSet, sync::Arc, sync::OnceLock};
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 #[error(transparent)]
 pub enum Error {
     VersionGrouping(#[from] ferinth::Error),
@@ -46,7 +46,9 @@ impl Filter {
             Filter::ReleaseChannel(v) => CompiledFilter::ReleaseChannel(v),
             Filter::Filename(pattern) => CompiledFilter::Filename(Arc::new(Regex::new(&pattern)?)),
             Filter::Title(pattern) => CompiledFilter::Title(Arc::new(Regex::new(&pattern)?)),
-            Filter::Description(pattern) => CompiledFilter::Description(Arc::new(Regex::new(&pattern)?)),
+            Filter::Description(pattern) => {
+                CompiledFilter::Description(Arc::new(Regex::new(&pattern)?))
+            }
         })
     }
 }
@@ -114,9 +116,9 @@ impl CompiledFilter {
 
                 download_files
                     .positions(|f| {
-                        matching_groups.iter().any(|group| {
-                            group.iter().any(|vc| f.game_versions.contains(vc))
-                        })
+                        matching_groups
+                            .iter()
+                            .any(|group| group.iter().any(|vc| f.game_versions.contains(vc)))
                     })
                     .collect_hashset()
             }

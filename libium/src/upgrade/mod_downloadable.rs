@@ -29,10 +29,7 @@ pub enum Error {
 type Result<T> = std::result::Result<T, Error>;
 
 impl Mod {
-    pub async fn fetch_download_file(
-        &self,
-        profile_filters: &[Filter],
-    ) -> Result<DownloadData> {
+    pub async fn fetch_download_file(&self, profile_filters: &[Filter]) -> Result<DownloadData> {
         match &self.identifier {
             ModIdentifier::PinnedCurseForgeProject(mod_id, pin) => {
                 Ok(try_from_cf_file(CURSEFORGE_API.get_mod_file(*mod_id, *pin).await?)?.1)
@@ -81,11 +78,9 @@ impl Mod {
                     combined
                 };
 
-                let index = super::check::select_latest(
-                    download_files.iter().map(|(m, _)| m),
-                    filters,
-                )
-                .await?;
+                let index =
+                    super::check::select_latest(download_files.iter().map(|(m, _)| m), filters)
+                        .await?;
                 Ok(download_files.into_iter().nth(index).unwrap().1)
             }
         }

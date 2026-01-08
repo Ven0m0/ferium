@@ -8,7 +8,7 @@ use std::{
     path::Path,
 };
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 #[error(transparent)]
 pub enum Error {
     IOError(#[from] std::io::Error),

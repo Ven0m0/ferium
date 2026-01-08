@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Manifest {
     /// Information about how to setup Minecraft
@@ -17,7 +17,7 @@ pub struct Manifest {
     pub overrides: String,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Minecraft {
     pub version: String,
@@ -25,13 +25,13 @@ pub struct Minecraft {
     pub mod_loaders: Vec<ModpackModLoader>,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ManifestType {
     MinecraftModpack,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ModpackFile {
     #[serde(rename = "projectID")]
     pub project_id: i32,
@@ -40,7 +40,7 @@ pub struct ModpackFile {
     pub required: bool,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ModpackModLoader {
     /// The name/ID of the mod loader

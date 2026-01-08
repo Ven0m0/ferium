@@ -3,7 +3,7 @@ use crate::iter_ext::IterExt as _;
 use derive_more::derive::Display;
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize, Debug, Display, Clone)]
+#[derive(Clone, Debug, Deserialize, Display, Serialize)]
 pub enum Filter {
     /// Prefers files in the order of the given loaders
     ///
@@ -92,7 +92,7 @@ impl ProfileParameters for Vec<Filter> {
 //     }
 // }
 
-#[derive(Deserialize, Serialize, Debug, Display, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+#[derive(Clone, Copy, Debug, Deserialize, Display, Eq, PartialEq, Serialize, clap::ValueEnum)]
 pub enum ReleaseChannel {
     Release,
     Beta,
