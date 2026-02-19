@@ -38,7 +38,7 @@ exclude = [".github", "tests", "media"]
 resolver = "2"
 
 [workspace.dependencies]
-clap = { version = "4.5.57", features = ["derive", "env"] }
+clap = { version = "4.5.58", features = ["derive", "env"] }
 ferinth = "2.12"
 furse = "1.6"
 octocrab = "0.49"
